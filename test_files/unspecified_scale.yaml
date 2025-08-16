@@ -1,0 +1,10 @@
+monitors:
+  A:
+    width: 10
+    height: 10
+
+  B:
+    width: 20
+    height: 20
+    position: below A
+    align: right

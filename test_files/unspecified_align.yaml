@@ -1,0 +1,11 @@
+monitors:
+  A:
+    width: 10
+    height: 10
+    scale: 1
+
+  B:
+    width: 20
+    height: 20
+    scale: 2
+    position: below A

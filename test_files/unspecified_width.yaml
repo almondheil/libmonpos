@@ -1,0 +1,10 @@
+monitors:
+  A:
+    height: 10
+    scale: 1
+
+  B:
+    height: 20
+    scale: 1
+    position: below A
+    align: left

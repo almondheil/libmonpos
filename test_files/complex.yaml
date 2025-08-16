@@ -1,0 +1,35 @@
+monitors:
+  A:
+    width: 2256
+    height: 1504
+    scale: 1.75
+
+  B:
+    width: 1920
+    height: 1080
+    scale: 1.00
+    position: left-of A
+
+  C:
+    width: 1920
+    height: 1080
+    scale: 2
+    position: left-of D
+
+  D:
+    width: 1920
+    height: 1080
+    scale: 2
+    position: below B
+
+  E:
+    width: 1920
+    height: 1080
+    scale: 2
+    position: above F
+
+  F:
+    width: 1920
+    height: 1080
+    scale: 2
+    position: right-of A

@@ -1,0 +1,7 @@
+monitors:
+  secondary:
+    width: 1000
+    height: 1000
+    position: left-of primary
+
+  # oh no I forgot to define primary!

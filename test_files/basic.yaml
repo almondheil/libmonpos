@@ -1,0 +1,12 @@
+monitors:
+  primary:
+    width: 500
+    height: 500
+    scale: 1
+
+  secondary:
+    width: 1920
+    height: 1080
+    scale: 1
+    position: left-of primary
+    align: bottom

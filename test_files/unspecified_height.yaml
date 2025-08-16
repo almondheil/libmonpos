@@ -1,0 +1,10 @@
+monitors:
+  A:
+    width: 10
+    scale: 1
+
+  B:
+    width: 20
+    scale: 1
+    position: below A
+    align: left

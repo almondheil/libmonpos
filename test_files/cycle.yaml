@@ -1,0 +1,15 @@
+monitors:
+  A:
+    width: 2000
+    height: 1000
+    position: left-of B
+
+  B:
+    width: 2000
+    height: 1000
+    position: left-of C
+
+  C:
+    width: 2000
+    height: 1000
+    position: left-of A
