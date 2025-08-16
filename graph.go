@@ -2,18 +2,9 @@ package libmonpos
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/dominikbraun/graph"
 )
-
-func get_parent(mon Monitor) (string, error) {
-	parts := strings.Split(mon.Position, " ")
-	if len(parts) != 2 {
-		return "", fmt.Errorf("position must be of the form <direction> <monitor>")
-	}
-	return parts[1], nil
-}
 
 func graph_disconnected(g graph.Graph[string,string], order []string) bool {
 	// count the vertices attached to order[0] with a bfs
@@ -27,7 +18,7 @@ func graph_disconnected(g graph.Graph[string,string], order []string) bool {
 	return count != len(order)
 }
 
-func FindMonitorOrder(conf Config) ([]string, error) {
+func find_monitor_order(conf Config) ([]string, error) {
 	g := graph.New(graph.StringHash, graph.PreventCycles(), graph.Directed())
 
 	// first pass: add a vertex for each monitor
@@ -41,7 +32,7 @@ func FindMonitorOrder(conf Config) ([]string, error) {
 	// second pass: edges between nodes that are positioned next to each other
 	for name, mon := range conf.Monitors {
 		if mon.Position != "" {
-			parent, err := get_parent(mon)
+			_, parent, err := split_position(mon.Position)
 			if err != nil {
 				return nil, err
 			}
