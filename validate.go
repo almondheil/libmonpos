@@ -31,12 +31,11 @@ func check_direction_alignment(direction string, alignment string) error {
 	// depending on if the direction is horizontal, decide whether the alignment is valid or not
 	is_horiz := slices.Contains(h_directions, direction)
 
-	// h directions work with v alignments, or "center"
-	if is_horiz && !slices.Contains(append(v_alignments, "center"), alignment) {
+	// h directions work with v alignments, "center", or ""
+	// v directions work with h alignments
+	if is_horiz && !slices.Contains(append(v_alignments, "center", ""), alignment) {
 		return fmt.Errorf("for direction '%v', only alignments 'top', 'bottom', and 'center' are valid. got '%v'", direction, alignment)
-	}
-	// v directions work with h alignments, or "center"
-	if !is_horiz && !slices.Contains(append(h_alignments, "center"), alignment){
+	} else if !is_horiz && !slices.Contains(append(h_alignments, "center", ""), alignment){
 		return fmt.Errorf("for direction '%v', only alignments 'left', 'right', and 'center' are valid. got '%v'", direction, alignment)
 	}
 
