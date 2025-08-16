@@ -5,12 +5,6 @@ import (
 	"testing"
 )
 
-var h_positions = []string{"left-of", "right-of"}
-var v_positions = []string{"above", "below"}
-var h_alignments = []string{"left", "right"}
-var v_alignments = []string{"top", "bottom"}
-var hv_alignments = []string{"center"}
-
 func TestPositionAlignmentPairs(t *testing.T) {
 	var empty = []string{""}
 
@@ -22,10 +16,10 @@ func TestPositionAlignmentPairs(t *testing.T) {
 	}{
 			{"pos horiz align vert", h_positions, v_alignments, true},
 			{"pos horiz align horiz", h_positions, h_alignments, false},
-			{"pos horiz align both", h_positions, hv_alignments, true},
+			{"pos horiz align both", h_positions, []string{"center"}, true},
 			{"pos vert align horiz", v_positions, h_alignments, true},
 			{"pos vert align vert", v_positions, v_alignments, false},
-			{"pos vert align both", v_positions, hv_alignments, true},
+			{"pos vert align both", v_positions, []string{"center"}, true},
 			{"pos horiz align unspecified", h_positions, empty, true},
 			{"pos vert align unspecified", v_positions, empty, true},
 			{"pos unspecified align horiz", empty, h_alignments, false},
@@ -55,7 +49,7 @@ func TestPositionAlignmentPairs(t *testing.T) {
 						err := validate_monitor(mon, []string{"fake"})
 						valid := err == nil
 						if valid != tt.expected {
-							t_sub.Errorf("error: %v", err)
+							t_sub.Errorf("%v: %v", mon, err)
 						}
 					})
 				}
@@ -64,6 +58,5 @@ func TestPositionAlignmentPairs(t *testing.T) {
 	}
 }
 
-
-// func validate_monitor(m Monitor, monitor_names []string) error
-// func validate_config(c Config) error
+// TODO: IS THE POSITION VALID?
+// TODO: NONSENSICAL VALUES FOR POS AND ALIGN
