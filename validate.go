@@ -3,6 +3,8 @@ package libmonpos
 import (
 	"fmt"
 	"slices"
+
+	"github.com/dominikbraun/graph"
 )
 
 // Categorization of which directions and alignments are horizontal vs vertical
@@ -40,4 +42,58 @@ func check_direction_alignment(direction string, alignment string) error {
 
 	// getting to the end with no errors means we are officially done and the monitor definition is valid
 	return nil
+}
+
+func find_monitor_order(conf Config) ([]string, error) {
+
+	// Return whether a graph is disconnected, given a list of its nodes in any order.
+	var graph_disconnected = func (g graph.Graph[string,string], vertices []string) bool {
+		// use a BFS to count the vertices connected to vertices[0]
+		count := 0
+		graph.BFS(g, vertices[0], func (string) bool {
+			count++
+			return false
+		})
+
+		// compare to the total number of vertices
+		return count != len(vertices)
+	}
+
+	// first pass: add a vertex for each monitor
+	g := graph.New(graph.StringHash, graph.PreventCycles(), graph.Directed())
+	for name := range conf.Monitors {
+		err := g.AddVertex(name)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// second pass: edges between nodes that are positioned next to each other
+	for name, mon := range conf.Monitors {
+		if mon.Position != "" {
+			_, parent, err := split_position(mon.Position)
+			if err != nil {
+				return nil, err
+			}
+
+			err = g.AddEdge(parent, name)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// do a topological sort of the graph.
+	// this makes sure every vertex appears before its child, but DOES NOT have any guarantees about if the graph is connected.
+	order, err := graph.TopologicalSort(g)
+	if err != nil {
+		return nil, err
+	}
+
+	// check that all the vertices are connected, if not be mad
+	if graph_disconnected(g, order) {
+		return nil, fmt.Errorf("all monitors must be connected to one main monitor")
+	}
+
+	return order, nil
 }
