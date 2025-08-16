@@ -6,13 +6,11 @@ import (
 	"strings"
 )
 
-/// Valid positions 
-var positions = []string{"left-of", "right-of", "above", "below"}
-var positions_horiz = []string{"left-of", "right-of"}
-
-/// Valid alignments
-var alignments_horiz = []string{"center", "left", "right"}
-var alignments_vert = []string{"center", "top", "bottom"}
+// categorization of which positions and alignments are horizontal vs vertical
+var h_positions = []string{"left-of", "right-of"}
+var v_positions = []string{"above", "below"}
+var h_alignments = []string{"left", "right"}
+var v_alignments = []string{"top", "bottom"}
 
 /// Validate a monitor config, ensuring that the position and align are valid if they are defined.
 ///
@@ -29,13 +27,15 @@ func validate_monitor(m Monitor, monitor_names []string) error {
 	if len(parts) != 2 {
 		return fmt.Errorf("position must be of the form <position> <monitor>")
 	}
+	position := parts[0]
+	align := parts[1]
 
 	// make sure the first and second word are actually a position and name respectively
-	if !slices.Contains(positions, parts[0]) {
-		return fmt.Errorf("expected position 'above', 'below', 'left-of', or 'right-of', got '%v'", parts[0]) 
+	if !slices.Contains(h_positions, position) && !slices.Contains(v_positions, position) {
+		return fmt.Errorf("expected position 'above', 'below', 'left-of', or 'right-of', got '%v'", position) 
 	}
-	if !slices.Contains(monitor_names, parts[1]) {
-		return fmt.Errorf("expected a monitor name, got '%v'", parts[1])
+	if !slices.Contains(monitor_names, align) {
+		return fmt.Errorf("expected a monitor name, got '%v'", align)
 	}
 
 	// if m.Align is empty, now we can set it to the always-valid value "center"
@@ -45,11 +45,15 @@ func validate_monitor(m Monitor, monitor_names []string) error {
 	}
 
 	// depending on if the position is horizontal, decide whether the alignment is valid or not
-	is_horiz := slices.Contains(positions_horiz, parts[0])
-	if is_horiz && !slices.Contains(alignments_vert, m.Align) {
-		return fmt.Errorf("for position '%v', only alignments 'top', 'bottom', and 'center' are valid. got '%v'", parts[0], m.Align)
-	} else if !is_horiz && !slices.Contains(alignments_horiz, m.Align) {
-		return fmt.Errorf("for position '%v', only alignments 'left', 'right', and 'center' are valid. got '%v'", parts[0], m.Align)
+	is_horiz := slices.Contains(h_positions, position)
+
+	// h positions work with v alignments, or "center"
+	if is_horiz && !slices.Contains(v_alignments, m.Align) && m.Align != "center"  {
+		return fmt.Errorf("for position '%v', only alignments 'top', 'bottom', and 'center' are valid. got '%v'", position, m.Align)
+	}
+	// v positions work with h alignments, or "center"
+	if !is_horiz && !slices.Contains(h_alignments, m.Align) && m.Align != "center" {
+		return fmt.Errorf("for position '%v', only alignments 'left', 'right', and 'center' are valid. got '%v'", position, m.Align)
 	}
 
 	// getting to the end with no errors means we are officially done and the monitor definition is valid
