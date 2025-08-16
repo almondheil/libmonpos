@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-/// Valid directions
-var directions = []string{"left-of", "right-of", "above", "below"}
-var directions_horiz = []string{"left-of", "right-of"}
+/// Valid positions 
+var positions = []string{"left-of", "right-of", "above", "below"}
+var positions_horiz = []string{"left-of", "right-of"}
 
 /// Valid alignments
 var alignments_horiz = []string{"center", "left", "right"}
@@ -27,15 +27,15 @@ func validate_monitor(m Monitor, monitor_names []string) error {
 	// check the general format of position, <word> <word>
 	parts := strings.Split(m.Position, " ")
 	if len(parts) != 2 {
-		return fmt.Errorf("position must be of the form <direction> <monitor>")
+		return fmt.Errorf("position must be of the form <position> <monitor>")
 	}
 
-	// make sure the first and second word are actually a direction and name respectively
-	if !slices.Contains(directions, parts[0]) {
-		return fmt.Errorf("expected direction above, below, left-of, or right-of, got %v", parts[0]) 
+	// make sure the first and second word are actually a position and name respectively
+	if !slices.Contains(positions, parts[0]) {
+		return fmt.Errorf("expected position 'above', 'below', 'left-of', or 'right-of', got '%v'", parts[0]) 
 	}
 	if !slices.Contains(monitor_names, parts[1]) {
-		return fmt.Errorf("expected a monitor name, got %v", parts[1])
+		return fmt.Errorf("expected a monitor name, got '%v'", parts[1])
 	}
 
 	// if m.Align is empty, now we can set it to the always-valid value "center"
@@ -44,12 +44,12 @@ func validate_monitor(m Monitor, monitor_names []string) error {
 		return nil
 	}
 
-	// depending on if the direction is horizontal, decide whether the alignment is valid or not
-	is_horiz := slices.Contains(directions_horiz, parts[0])
+	// depending on if the position is horizontal, decide whether the alignment is valid or not
+	is_horiz := slices.Contains(positions_horiz, parts[0])
 	if is_horiz && !slices.Contains(alignments_vert, m.Align) {
-		return fmt.Errorf("for direction %v, only alignments top, bottom, and center are valid. got '%v'", parts[0], m.Align)
+		return fmt.Errorf("for position '%v', only alignments 'top', 'bottom', and 'center' are valid. got '%v'", parts[0], m.Align)
 	} else if !is_horiz && !slices.Contains(alignments_horiz, m.Align) {
-		return fmt.Errorf("for direction %v, only alignments left, right, and center are valid. got '%v'", parts[0], m.Align)
+		return fmt.Errorf("for position '%v', only alignments 'left', 'right', and 'center' are valid. got '%v'", parts[0], m.Align)
 	}
 
 	// getting to the end with no errors means we are officially done and the monitor definition is valid
