@@ -1,4 +1,4 @@
-package main // monitor_position
+package monitor_position
 
 import (
 	"fmt"
@@ -121,13 +121,4 @@ func validate_config(c Config) error {
 	}
 
 	return nil
-}
-
-func main() {
-	err, config := read_config("./bad.yaml")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("%v\n", config)
 }
