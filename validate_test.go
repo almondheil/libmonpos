@@ -2,29 +2,42 @@ package libmonpos
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
-func TestPositionAlignmentPairs(t *testing.T) {
+func TestDirectionAlignmentPairs(t *testing.T) {
 	var empty = []string{""}
+	var center = []string{"center"}
+	var invalid = []string{
+		"next-to",
+		"who-cares",
+		"gleeble",
+	}
 
 	var tests = []struct {
 		name string
-		positions []string
-		aligns []string
+		directions []string
+		alignments []string
 		expected bool
 	}{
-			{"pos horiz align vert", h_directions, v_alignments, true},
-			{"pos horiz align horiz", h_directions, h_alignments, false},
-			{"pos horiz align both", h_directions, []string{"center"}, true},
-			{"pos vert align horiz", v_directions, h_alignments, true},
-			{"pos vert align vert", v_directions, v_alignments, false},
-			{"pos vert align both", v_directions, []string{"center"}, true},
-			{"pos horiz align unspecified", h_directions, empty, true},
-			{"pos vert align unspecified", v_directions, empty, true},
-			{"pos unspecified align horiz", empty, h_alignments, false},
-			{"pos unspecified align vert", empty, v_alignments, false},
-			{"pos unspecified align unspecified", empty, empty, true},
+			{"dir horiz align vert", h_directions, v_alignments, true},
+			{"dir horiz align horiz", h_directions, h_alignments, false},
+			{"dir horiz align center", h_directions, center, true},
+			{"dir vert align horiz", v_directions, h_alignments, true},
+			{"dir vert align vert", v_directions, v_alignments, false},
+			{"dir vert align center", v_directions, center, true},
+			{"dir horiz align unspecified", h_directions, empty, true},
+			{"dir vert align unspecified", v_directions, empty, true},
+			{"dir unspecified align horiz", empty, h_alignments, false},
+			{"dir unspecified align vert", empty, v_alignments, false},
+			{"dir unspecified align unspecified", empty, empty, true},
+			{"dir invalid align vert", invalid, v_alignments, false},
+			{"dir invalid align horiz", invalid, h_alignments, false},
+			{"dir invalid align center", invalid, center, false},
+			{"dir horiz align invalid", h_directions, invalid, false},
+			{"dir vert align invalid", v_directions, invalid, false},
+			{"dir invalid align invalid", invalid, invalid, false},
 	}
 
 	// for each category of position and alignment
@@ -32,24 +45,16 @@ func TestPositionAlignmentPairs(t *testing.T) {
 		t.Run(tt.name, func (t *testing.T) {
 
 			// for each individual combo of (position, alignment) within that category
-			for _, pos := range tt.positions {
-				for _, align := range tt.aligns {
-					testname := fmt.Sprintf("'%v' and '%v'", pos, align)
+			for _, dir := range tt.directions {
+				for _, align := range tt.alignments {
+					testname := fmt.Sprintf("'%v' and '%v'", dir, align)
 					t.Run(testname, func (t *testing.T) {
-						// make config that could be a monitor.
-						// (tack on a fake monitor to make the string valid if the position is not empty)
-						var mon Monitor
-						if pos == "" {
-							mon = Monitor{1920, 1080, 1.0, pos, align}
-						} else {
-							mon = Monitor{1920, 1080, 1.0, pos + " fake", align}
-						}
 
 						// validate the monitor, and check the result matches the expected value
-						err := validate_monitor(mon, []string{"fake"})
+						err := check_direction_alignment(dir, align)
 						valid := err == nil
 						if valid != tt.expected {
-							t.Errorf("%v: %v", mon, err)
+							t.Errorf("'%v' and '%v': %v", dir, align, err)
 						}
 					})
 				}
@@ -58,84 +63,62 @@ func TestPositionAlignmentPairs(t *testing.T) {
 	}
 }
 
-func TestRelativePositions(t *testing.T) {
-	// this list of monitor names will be used for all these tests
-	monitor_list := []string{"mon1", "mon2", "mon3", "mon4"}
-
+func TestValidateConfigFiles(t *testing.T) {
 	tests := []struct{
-		target_name string
+		conf_file string
 		expected bool
 	}{
-		{"mon1", true},
-		{"mon2", true},
-		{"mon3", true},
-		{"mon4", true},
-		{"mon5", false},
-		{"fake", false},
+		{"test_files/basic.yaml", true},
+		{"test_files/basic_with_yaml_header.yaml", true},
+		{"test_files/complex.yaml", true},
+		{"test_files/invalid_names.yaml", false},
+		{"test_files/not_yaml.txt", false},
 	}
 
-	// We expect it to return no error when our monitor is in the list, and an error when it's not
 	for _, tt := range tests {
-		t.Run(tt.target_name, func (t *testing.T) {
-			for _, direction := range append(h_directions, v_directions...) {
-				mon := Monitor{1920, 1080, 1.0, direction + " " + tt.target_name, "center"}
-				err := validate_monitor(mon, monitor_list)
+		t.Run(tt.conf_file, func (t *testing.T) {
+			// check that the file exists first
+			_, err := os.Stat(tt.conf_file)
+			if err != nil {
+				t.Errorf("error finding config file: %v", err)
+				return
+			}
 
-				value := err == nil
-				if value != tt.expected {
-					t.Errorf("%v: %v", mon, err)
-				}
+			_, _, err = LoadConfig(tt.conf_file)
+			actual := err == nil
+			if tt.expected != actual {
+				t.Errorf("%v: %v", tt.conf_file, err)
 			}
 		})
 	}
 }
 
-func TestNonsensicalPositions(t *testing.T) {
-	// for these tests, "mon1" is a valid monitor
-	tests := []string{
-		"diagonal-to mon1",
-		"glerb",
-		"left-of",
-		"mon1 above",
-	}
-
-	for _, position := range tests {
-		for _, alignment := range append(h_alignments, append(v_alignments, "center")...) {
-			testname := fmt.Sprintf("%v %v", position, alignment)
-			t.Run(testname, func (t *testing.T) {
-				mon := Monitor{1920, 1080, 1.0, position, alignment}
-				err := validate_monitor(mon, []string{"mon1"})
-
-				if err == nil {
-					t.Errorf("%v: %v", mon, err)
-				}
-			})
-		}
-	}
+/*
+func TestOrder(t *testing T) {
 }
 
-func TestNonsensicalAlignments(t *testing.T) {
-	tests := []string{
-		"diagonal",
-		"nowhere",
-		"same",
+func TestDefaultAlign(t *testing.T) {
+	tests := []struct{
+		conf_file string
+		name string
+		expected Monitor
+	}{
+		{"test_files/default_align.yaml", "secondary", Monitor{1920, 1080, 2.0, "left-of primary", "center"}},
 	}
 
-	for _, alignment := range tests {
-		for _, direction := range append(h_directions, v_directions...) {
-			position := direction + " mon1"
-			testname := fmt.Sprintf("%v %v", position, alignment)
+	for _, tt := range tests {
+		t.Run(tt.conf_file, func (t *testing.T) {
+			conf, err := LoadConfig(tt.conf_file)
+			if err != nil {
+				t.Errorf("unexpected error reading config: %v", err)
+				return
+			}
 
-			t.Run(testname, func (t *testing.T) {
-				mon := Monitor{1920, 1080, 1.0, position, alignment}
-				err := validate_monitor(mon, []string{"mon1"})
-
-				if err == nil {
-					t.Errorf("%v: %v", mon, err)
-				}
-			})
-		}
+			actual := conf.Monitors[tt.name]
+			if tt.expected != actual {
+				t.Errorf("definitions did not match: expected %v, got %v", tt.expected, actual)
+			}
+		})
 	}
 }
-
-// TODO: CONFIG VALIDATION AS A WHOLE
+*/
