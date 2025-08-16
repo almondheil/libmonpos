@@ -33,10 +33,8 @@ func (m Monitor) String() string {
 	return dimensions + " " + position + "}"
 }
 
-/// Read a config file from disk and ensure that it is valid.
-///
-/// If position has a value but align is not specified, it will be defaulted to "center"
-func ReadConfig(path string) (Config, error) {
+/// Read a config file from disk. Does NOT verify the position and alignment of the monitor.
+func read_config_yaml(path string) (Config, error) {
 	// read the file from the system
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -50,7 +48,32 @@ func ReadConfig(path string) (Config, error) {
 		return Config{}, err
 	}
 
-	// validate the config before returning it
+	return conf, nil
+}
+
+/// Apply defaults across a config
+func apply_defaults(c Config) {
+	for name, mon := range c.Monitors {
+		// align defaults to center when unspecified
+		if mon.Position != "" && mon.Align == "" {
+			mon.Align = "center"
+			c.Monitors[name] = mon
+		}
+	}
+}
+
+/// Read a config file from disk and ensure that it is valid.
+///
+/// If position has a value but align is not specified, it will be defaulted to "center"
+func LoadConfig(path string) (Config, error) {
+	conf, err := read_config_yaml(path)
+	if err != nil {
+		return Config{}, err
+	}
+
+	// Apply any defaults to that config
+	apply_defaults(conf)
+
 	err = validate_config(conf)
 	if err != nil {
 		return Config{}, err

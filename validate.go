@@ -38,12 +38,6 @@ func validate_monitor(m Monitor, monitor_names []string) error {
 		return fmt.Errorf("expected a monitor name, got '%v'", monitor)
 	}
 
-	// if m.Align is empty, now we can set it to the always-valid value "center"
-	if m.Align == "" {
-		m.Align = "center"
-		return nil
-	}
-
 	// depending on if the direction is horizontal, decide whether the alignment is valid or not
 	is_horiz := slices.Contains(h_directions, direction)
 
