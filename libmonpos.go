@@ -24,13 +24,13 @@ type Config struct {
 }
 
 func (m Monitor) String() string {
-	dimensions := fmt.Sprintf("monitor %dx%d @ %.2fx", m.Width, m.Height, m.Scale)
+	dimensions := fmt.Sprintf("Monitor{%dx%d@%.2fx", m.Width, m.Height, m.Scale)
 	if m.Position == "" {
-		return dimensions
+		return dimensions + "}"
 	}
 
 	position := fmt.Sprintf("%v, align %v", m.Position, m.Align)
-	return dimensions + " " + position
+	return dimensions + " " + position + "}"
 }
 
 /// Read a config file from disk and ensure that it is valid.
