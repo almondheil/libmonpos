@@ -1,4 +1,4 @@
-module github.com/almondheil/monitor_position
+module github.com/almondheil/libmonpos
 
 go 1.24.6
 

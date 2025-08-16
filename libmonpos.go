@@ -1,4 +1,4 @@
-package monitor_position
+package libmonpos
 
 import (
 	"fmt"
@@ -37,7 +37,7 @@ type Config struct {
 /// Read a config file from disk and ensure that it is valid.
 ///
 /// If position has a value but align is not specified, it will be defaulted to "center"
-func read_config(path string) (error, Config) {
+func ReadConfig(path string) (error, Config) {
 	// read the file from the system
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -93,9 +93,9 @@ func validate_monitor(m Monitor, monitor_names []string) error {
 	// depending on if the direction is horizontal, decide whether the alignment is valid or not
 	is_horiz := slices.Contains(directions_horiz, parts[0])
 	if is_horiz && !slices.Contains(alignments_vert, m.Align) {
-		return fmt.Errorf("for direction %v, only alignments top, bottom, and center are valid. got %v", parts[0], m.Align)
-	} else if !is_horiz {
-		return fmt.Errorf("for direction %v, only alignments left, right, and center are valid. got %v", parts[0], m.Align)
+		return fmt.Errorf("for direction %v, only alignments top, bottom, and center are valid. got '%v'", parts[0], m.Align)
+	} else if !is_horiz && !slices.Contains(alignments_horiz, m.Align) {
+		return fmt.Errorf("for direction %v, only alignments left, right, and center are valid. got '%v'", parts[0], m.Align)
 	}
 
 	// getting to the end with no errors means we are officially done and the monitor definition is valid
