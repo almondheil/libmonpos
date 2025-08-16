@@ -12,7 +12,7 @@ import (
 type Monitor struct {
 	Width uint
 	Height uint
-	Scale float32
+	Scale float32  `yaml:",omitempty"`
 	Position string `yaml:",omitempty"`
 	Align string `yaml:",omitempty"`
 }
@@ -54,9 +54,15 @@ func read_config_yaml(path string) (Config, error) {
 // Apply defaults to all monitors in a config
 func apply_defaults(c Config) {
 	for name, mon := range c.Monitors {
-		// align defaults to center when unspecified
+		// default align: center (if position is specified)
 		if mon.Position != "" && mon.Align == "" {
 			mon.Align = "center"
+			c.Monitors[name] = mon
+		}
+
+		// default scale: 1.0
+		if mon.Scale == 0.0 {
+			mon.Scale = 1.0
 			c.Monitors[name] = mon
 		}
 	}
@@ -92,7 +98,12 @@ func LoadConfig(path string) (Config, []string, error) {
 	apply_defaults(conf)
 
 	// For all monitors, check that their direction and alignment are valid and agree with each other.
-	for _, monitor := range conf.Monitors {
+	for name, monitor := range conf.Monitors {
+		// If the dimensions are unspecified, scream and cry
+		if monitor.Width == 0 || monitor.Height == 0 || monitor.Scale == 0{
+			return Config{}, []string{}, fmt.Errorf("monitor '%v' width, height, and scale must be specified and nonzero", name)
+		}
+
 		// Get the direction, either from splitting or just leaving it empty
 		direction, _, err := split_position(monitor.Position)
 		if err != nil {
