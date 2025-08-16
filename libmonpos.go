@@ -17,7 +17,7 @@ type Monitor struct {
 	Align string `yaml:",omitempty"`
 }
 
-// The entire config file is made up of multiple Monitor entries, under a common monitors header.
+// The config file is made up of multiple Monitor entries, under a common monitors header.
 type Config struct {
 	Monitors map[string]Monitor
 }
@@ -51,7 +51,7 @@ func read_config_yaml(path string) (Config, error) {
 	return conf, nil
 }
 
-// Apply defaults across a config
+// Apply defaults to all monitors in a config
 func apply_defaults(c Config) {
 	for name, mon := range c.Monitors {
 		// align defaults to center when unspecified
@@ -82,8 +82,6 @@ func split_position(position string) (string, string, error) {
 
 // Read a config file from disk and check that it is valid,
 // generating an order to arrange monitors in the process.
-//
-//
 func LoadConfig(path string) (Config, []string, error) {
 	conf, err := read_config_yaml(path)
 	if err != nil {
