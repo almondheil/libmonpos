@@ -2,92 +2,75 @@ package libmonpos
 
 import (
 	"fmt"
-	"os"
-	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/dominikbraun/graph"
 )
 
-// Read a config file from disk. Does NOT verify the position and alignment of the monitor.
-func read_config_yaml(path string) (Config, error) {
-	// read the file from the system
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return Config{}, err
-	}
-
-	// unmarshal from yaml into the correct structure
-	conf := Config{}
-	err = yaml.Unmarshal([]byte(data), &conf)
-	if err != nil {
-		return Config{}, err
-	}
-
-	return conf, nil
+// One monitor in the config file.
+type Monitor struct {
+	Width uint
+	Height uint
+	Scale float64  `yaml:",omitempty"`
+	Position string `yaml:",omitempty"`
+	Align string `yaml:",omitempty"`
 }
 
-// Apply defaults to all monitors in a config
-func apply_defaults(c Config) {
-	for name, mon := range c.Monitors {
-		// default align: center (if position is specified)
-		if mon.Position != "" && mon.Align == "" {
-			mon.Align = "center"
-			c.Monitors[name] = mon
-		}
-
-		// default scale: 1.0
-		if mon.Scale == 0.0 {
-			mon.Scale = 1.0
-			c.Monitors[name] = mon
-		}
-	}
+// The config file is made up of multiple Monitor entries, under a common monitors header.
+type Config struct {
+	Monitors map[string]Monitor
 }
 
-// Given a position in the format `<direction> <monitor>`, split it into two parts and return them.
-// Returns an error if it is not two space-separated words.
-//
-// Special case: if position is an empty string, returns two empty string halves
-func split_position(position string) (string, string, error) {
-	// if the position is empty, just return two empty halves
-	if position == "" {
-		return "", "", nil
-	}
+// A graph representing connections between monitors
+type MonitorGraph graph.Graph[string,string]
 
-	parts := strings.Split(position, " ")
-	if len(parts) != 2 {
-		return "", "", fmt.Errorf("position should be of the form '<direction> <monitor>', got '%v'", position)
-	}
-
-	return parts[0], parts[1], nil
+// A rectangle defined by the top-left and bottom-right corner.
+type Rect struct {
+	L Pair
+	R Pair
+	Size Pair
 }
 
-// Read a config file from disk and check that it is valid,
-func LoadConfig(path string) (Config, error) {
-	conf, err := read_config_yaml(path)
-	if err != nil {
-		return Config{}, err
+// An (x, y) pair
+type Pair struct {
+	X int
+	Y int
+}
+
+// Construct a rect from the upper-left corner and dimensions.
+func make_rect(pos Pair, width, height int) Rect {
+	return Rect{pos, Pair{pos.X + width, pos.Y + height}, Pair{width, height}}
+}
+
+// Decide whether two Rects are overlapping
+func (r1 Rect) Overlaps(r2 Rect) bool {
+	// top-left corner of one is to the right of the bottom-right corner of the other
+	if r1.L.X >= r2.R.X || r2.L.X >= r1.R.X {
+		return false
 	}
 
-	// Apply any defaults to that config
-	apply_defaults(conf)
-
-	// For all monitors, check that their direction and alignment are valid and agree with each other.
-	for name, monitor := range conf.Monitors {
-		// If the dimensions are unspecified, scream and cry
-		if monitor.Width == 0 || monitor.Height == 0 || monitor.Scale == 0{
-			return Config{}, fmt.Errorf("monitor '%v' width, height, and scale must be specified and nonzero", name)
-		}
-
-		// Get the direction, either from splitting or just leaving it empty
-		direction, _, err := split_position(monitor.Position)
-		if err != nil {
-			return Config{}, err
-		}
-		err = check_direction_alignment(direction, monitor.Align)
-		if err != nil {
-			return Config{}, err
-		}
+	// top-left corner of one is below the bottom-right corner of the other
+	if r1.L.Y >= r2.R.Y || r2.L.Y >= r1.R.Y {
+		return false
 	}
 
-	return conf, nil
+	// if neither of those, there's overlap
+	return true
+}
+
+// Format monitor info as a string.
+func (m Monitor) String() string {
+	result := fmt.Sprintf("%vx%v", m.Width, m.Height)
+
+	// add on scale if non-standard
+	if m.Scale != 1.0 {
+		result += fmt.Sprintf("@%2.3vx", m.Scale)
+	}
+
+	// tack on position + align if position is defined
+	if m.Position == "" {
+		return result
+	} else {
+		result += fmt.Sprintf(" %v align %v", m.Position, m.Align)
+		return result
+	}
 }

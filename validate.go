@@ -3,6 +3,7 @@ package libmonpos
 import (
 	"fmt"
 	"slices"
+	"strings"
 )
 
 // Categorization of which directions and alignments are horizontal vs vertical
@@ -10,6 +11,24 @@ var h_directions = []string{"left-of", "right-of"}
 var v_directions = []string{"above", "below"}
 var h_alignments = []string{"left", "right"}
 var v_alignments = []string{"top", "bottom"}
+
+// Given a position in the format `<direction> <monitor>`, split it into two parts and return them.
+// Returns an error if it is not two space-separated words.
+//
+// Special case: if position is an empty string, returns two empty string halves
+func split_position(position string) (string, string, error) {
+	// if the position is empty, just return two empty halves
+	if position == "" {
+		return "", "", nil
+	}
+
+	parts := strings.Split(position, " ")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("position should be of the form '<direction> <monitor>', got '%v'", position)
+	}
+
+	return parts[0], parts[1], nil
+}
 
 // Check the direction and alignment of a monitor
 func check_direction_alignment(direction string, alignment string) error {

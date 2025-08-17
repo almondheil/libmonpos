@@ -97,8 +97,6 @@ func GeneratePositions(conf Config, g MonitorGraph) (map[string]Rect, error) {
 	// Check if there are any overlaps, scream and cry if so
 	var error_message = ""
 	for name1, rect1 := range positions {
-		fmt.Printf("%v: %v\n", name1, rect1)
-
 		for name2, rect2 := range positions {
 			if name1 == name2 {
 				continue
@@ -113,7 +111,7 @@ func GeneratePositions(conf Config, g MonitorGraph) (map[string]Rect, error) {
 	}
 
 	if error_message != "" {
-		return positions, fmt.Errorf(error_message)
+		return nil, fmt.Errorf(error_message)
 	} else {
 		return positions, nil
 	}
